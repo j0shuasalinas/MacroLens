@@ -1,0 +1,11 @@
+node_modules/
+.expo/
+dist/
+.env
+.env.local
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+apps/client/ios/
+apps/client/android/
