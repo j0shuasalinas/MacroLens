@@ -63,7 +63,7 @@ estimate**, review the foods and macros, and save. Confirm the totals appear on 
 | Can't reach server | API is running on 8010, client API URL is `http://localhost:8010` |
 | USDA unavailable | Check `USDA_API_KEY`; Gemini-only estimates remain usable |
 | Invalid or expired session | Sign out and sign in again; make sure local Supabase is running |
-| Image not supported | Use JPEG, PNG or WebP, under 8 MB and 25 megapixels |
+| Image not supported | Photos are automatically resized and exported as JPEG before upload. Direct API uploads allow JPEG/PNG/WebP up to 16 MB and 64 megapixels. Export HEIC/RAW as JPEG if your browser cannot open it. |
 
 Live provider success is not verified until real keys are supplied and an actual photo succeeds.
 
