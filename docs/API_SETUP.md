@@ -69,7 +69,7 @@ Live provider success is not verified until real keys are supplied and an actual
 
 ## Supabase later, when you're ready for phone/cloud use
 
-Create a Supabase project and apply `supabase/migrations/001_initial.sql` then `002_onboarding.sql`. Use its URL and
+Create a Supabase project and apply all SQL files in `supabase/migrations` in numeric order (001, 002, 003). Use its URL and
 publishable/anon key in the client; set the same values on the backend. The backend additionally
 needs the server-only service role key for account deletion. Never copy the service role key
 into the client. Replace all local values together to avoid mixing projects.

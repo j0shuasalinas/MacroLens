@@ -1,6 +1,6 @@
 # Verification record — October 15, 2026
 
-Final backend run: **16 passed**, including the opt-in real Supabase test.
+Final backend run: **17 passed**, including the opt-in real Supabase test.
 
 ## Verified locally
 
@@ -88,3 +88,13 @@ A real food-photo analysis still needs verification. The backend runs on loopbac
 - Desktop and 390×844 layouts were inspected. The test account is removed afterward.
 - No native device installation or latency benchmark was performed. Provider/network latency
   varies; client sends are bounded, explicit, and have loading/error states rather than simulated speed.
+
+## Calendar verification
+
+Migration 003 applied successfully to local Supabase without resetting data. All 17 backend
+tests passed, including month totals, leap-year February, meal date/macro edits, deletion,
+meal counts (not food-item counts), unauthorized access and separation between users.
+Browser verification used a disposable account with four synthetic meals: month navigation,
+800 kcal from two meals on one date, another day's 650 kcal meal, monthly counts/average,
+phone-sized rendering, selecting dates, and pre-filling the chosen day in the meal editor.
+No real user records were modified. The synthetic account is removed after verification.

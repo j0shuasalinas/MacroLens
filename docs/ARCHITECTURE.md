@@ -65,3 +65,5 @@ New authenticated routes: `GET /onboarding`, `POST /onboarding/suggest`,
 `POST /onboarding/complete`, and `POST /coach`. Apply migration 002 after migration 001.
 See [onboarding/coach design and limits](ONBOARDING_COACH.md). Onboarding completion now
 saves profile and goals atomically; ordinary Settings edits remain separate requests.
+
+Calendar: `GET /calendar?year=2026&month=10` uses a user-scoped database aggregation RPC from migration 003. See [calendar design](CALENDAR.md).

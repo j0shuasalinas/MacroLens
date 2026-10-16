@@ -15,7 +15,7 @@ weekly averages, weight chart and account deletion.
 Use Node 22 LTS or a current compatible Node version, npm, and [uv](https://docs.astral.sh/uv/).
 The checked-in npm and uv lockfiles capture the tested dependencies.
 
-1. Create a Supabase project. Run `supabase/migrations/001_initial.sql` then `002_onboarding.sql` in its SQL editor.
+1. Create a Supabase project. Run all SQL files in `supabase/migrations` in numeric order (001, 002, 003) in its SQL editor.
    This creates the five tables, indexes, ownership policies and a private storage bucket.
 2. Enable email/password authentication. Set the Supabase Auth Site URL to your web origin
    and allow your development/production redirect URLs. Email confirmation is supported:
@@ -150,3 +150,13 @@ supabase migration up --local
 
 Remote projects must also apply migration 002 before deploying the updated API/client.
 See [onboarding and coach details](docs/ONBOARDING_COACH.md).
+
+## Nutrition calendar
+
+Open **Calendar** in the navigation for a monthly view of logged calories. Select a date for
+its macro totals, saved meals, and a button to add a meal on that date. Month summaries show
+days logged, meals saved and average calories across logged days. Search all meals remains
+available from the calendar. Empty dates mean no entries, not zero food consumed.
+
+Apply `003_nutrition_calendar.sql` to existing cloud databases before deploying this update.
+The local migration is already applied. See [calendar details](docs/CALENDAR.md).
