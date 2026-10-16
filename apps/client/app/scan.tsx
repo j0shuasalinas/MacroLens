@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Image, Platform, ScrollView, Text, View, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { router } from 'expo-router';
 import { api, today, useDraft } from '../src/api';
 import { Button, Card, s, colors } from '../src/ui';
@@ -22,9 +23,19 @@ export default function Scan() {
     if (!photo) return;
     setBusy(true); setError('');
     try {
+      // Normalize phone photos before sending: quality alone does not reduce dimensions.
+      const scale = Math.min(1, 1600 / Math.max(photo.width, photo.height));
+      let prepared: ImageManipulator.ImageResult;
+      try {
+        prepared = await ImageManipulator.manipulateAsync(photo.uri,
+          scale < 1 ? [{ resize: { width: Math.max(1, Math.round(photo.width * scale)), height: Math.max(1, Math.round(photo.height * scale)) } }] : [],
+          { compress: .85, format: ImageManipulator.SaveFormat.JPEG });
+      } catch {
+        throw new Error('We couldn’t open this photo. Try a JPEG, PNG or WebP, or take a new photo. For an HEIC/RAW file your browser cannot open, export it as JPEG first.');
+      }
       const data = new FormData();
-      if (Platform.OS === 'web') data.append('image', await (await fetch(photo.uri)).blob(), photo.fileName || 'meal.jpg');
-      else data.append('image', { uri: photo.uri, name: photo.fileName || 'meal.jpg', type: photo.mimeType || 'image/jpeg' } as unknown as Blob);
+      if (Platform.OS === 'web') data.append('image', await (await fetch(prepared.uri)).blob(), 'meal.jpg');
+      else data.append('image', { uri: prepared.uri, name: 'meal.jpg', type: 'image/jpeg' } as unknown as Blob);
       const result = await api('/analyze', 'POST', data);
       if (!result.items.length) throw new Error('We couldn’t spot any food. Try a brighter photo with the whole plate in view, or enter the meal yourself.');
       useDraft.getState().setMeal({ title: 'Photo meal', day: today(), category: 'lunch', items: result.items });
@@ -36,7 +47,7 @@ export default function Scan() {
   }
   return <ScrollView style={s.page} contentContainerStyle={[s.content, { maxWidth: 740 }]}>
     <Text style={s.eyebrow}>SNAP · REVIEW · SAVE</Text><Text style={s.title}>What’s on your plate?</Text>
-    <Text style={s.subtitle}>Take a photo. We’ll estimate the nutrition. You make the final call.</Text>
+    <Text style={s.subtitle}>Take a photo. We’ll estimate the nutrition. You make the final call. Large photos are automatically resized for a faster upload.</Text>
     <View style={{ backgroundColor: '#eaf0e5', borderRadius: 30, minHeight: 300, overflow: 'hidden', borderWidth: 1, borderColor: '#dce5d6' }}>
       {photo ? <Image accessibilityLabel="Your selected meal photo" source={{ uri: photo.uri }} style={{ width: '100%', height: 340 }} resizeMode="contain" /> :
         <View style={{ flex: 1, minHeight: 300, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 28 }}>

@@ -57,7 +57,7 @@ and bearer authentication; CORS is enforced by browsers, not native networking. 
 
 The in-process analysis throttle is five requests/minute/user. Run one worker for personal
 use. For multiple workers/instances, enforce a shared per-user limit at a gateway or replace
-it with Redis before scaling. Configure proxy request-size limits (8 MB plus multipart overhead),
+it with Redis before scaling. Configure proxy request-size limits (16 MB plus multipart overhead),
 request timeouts above 65 seconds, provider quotas/billing limits, and Supabase Auth limits.
 Logs record failure classes/paths, never photos, tokens, prompts or provider error bodies.
 Use access-log controls at the host to avoid logging credentials. Monitor upstream errors.
@@ -180,3 +180,8 @@ Apple's distribution system and must be initiated only when you're ready to dist
 - [Expo local native development](https://docs.expo.dev/guides/local-app-development/)
 - [Expo PWA requirements](https://docs.expo.dev/guides/progressive-web-apps/)
 - [USDA API guide](https://fdc.nal.usda.gov/api-guide/)
+
+Meal photos are normalized to JPEG with a maximum 1600 px edge on the client.
+The API additionally accepts JPEG/PNG/WebP originals up to 16 MB and 64 megapixels,
+then downsizes them and strips metadata. HEIC/RAW decoding depends on the client
+platform; export as JPEG if the browser cannot open the original.
