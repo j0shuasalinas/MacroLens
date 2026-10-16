@@ -250,3 +250,15 @@ def test_calendar_validation_and_owner_token(authenticated, monkeypatch):
         assert authenticated.get('/calendar?'+params).status_code==422
     app.dependency_overrides.clear()
     assert authenticated.get('/calendar?year=2024&month=2').status_code==401
+
+@pytest.mark.parametrize('upstream,status,phrase',[(400,502,'not retried'),(429,429,'quota'),(503,503,'Stopped after 3'),(504,504,'stopped')])
+def test_scan_provider_errors_stop(authenticated,monkeypatch,upstream,status,phrase):
+    from app.gemini import GeminiFailure
+    monkeypatch.setattr(settings,'gemini_api_key','test')
+    class Fake:
+        async def analyze(self,*args):raise GeminiFailure(upstream,3 if upstream==503 else 1,'gemini-3.1-flash-lite',37 if upstream==429 else None)
+    monkeypatch.setattr(main,'provider',lambda:Fake())
+    image=io.BytesIO();Image.new('RGB',(10,10)).save(image,'JPEG')
+    r=authenticated.post('/analyze',files={'image':('food.jpg',image.getvalue(),'image/jpeg')})
+    assert r.status_code==status and phrase in r.json()['detail'] and 'busy' not in r.json()['detail']
+    if upstream==429:assert r.headers['Retry-After']=='37'

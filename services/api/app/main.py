@@ -17,6 +17,7 @@ from .models import Meal, Goals, Weight, Profile, totals, Onboarding, CoachReque
 from .nutrition import suggest_goals
 from . import coach
 from .ai import provider, enrich
+from .gemini import GeminiFailure
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('httpx').setLevel(logging.WARNING)
@@ -27,7 +28,8 @@ origins = [o.strip() for o in settings.cors_origins.split(',') if o.strip()]
 if settings.environment == 'production' and any(not o.startswith('https://') for o in origins):
     raise RuntimeError('Production CORS origins must use HTTPS')
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False,
-                   allow_methods=['GET','POST','PUT','DELETE'], allow_headers=['Authorization','Content-Type'])
+                   allow_methods=['GET','POST','PUT','DELETE'], allow_headers=['Authorization','Content-Type'],
+                   expose_headers=['Retry-After'])
 
 @app.exception_handler(Exception)
 async def unexpected(request: Request, exc: Exception):
@@ -100,9 +102,10 @@ async def analyze(image: UploadFile = File(...), actor=Depends(user)):
         raise HTTPException(503, 'Meal analysis is not configured')
     try:
         return await enrich(await provider().analyze(raw, 'image/jpeg'))
-    except APIError as exc:
-        code = 429 if exc.code == 429 else 502
-        raise HTTPException(code, 'AI provider busy. Please retry shortly.', headers={'Retry-After':'30'})
+    except GeminiFailure as exc:
+        status = exc.status if exc.status in (429, 503, 504) else 502
+        headers = {'Retry-After': str(exc.retry_after)} if exc.retry_after is not None else {}
+        raise HTTPException(status, exc.public_message, headers=headers)
     except (ValidationError, ValueError):
         raise HTTPException(502, 'AI returned an invalid result. Try another photo or log manually.')
     except (httpx.HTTPError, asyncio.TimeoutError):

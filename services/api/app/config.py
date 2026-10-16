@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     supabase_service_role_key: str = ''
     gemini_api_key: str = ''
     gemini_model: str = 'gemini-3.1-flash-lite'
+    gemini_fallback_model: str = ''
     ai_provider: str = 'gemini'
     usda_api_key: str = ''
     cors_origins: str = 'http://localhost:8081'
