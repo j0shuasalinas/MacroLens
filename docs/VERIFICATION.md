@@ -111,3 +111,16 @@ Render-side validation/deployment still requires account access. The API uses th
 preview plan explicitly; cold starts are documented. Provider secrets remain uncommitted.
 Render and Supabase integrations were discovered but not confirmed connected. No cloud
 project, public site, paid plan, or hosted data migration was created.
+
+
+## Hosted Supabase — 2026-10-16
+
+Applied migrations 001–003 through SQL Editor to `fiqfhrjrhwlnewcjqbkv`.
+Verified five RLS tables, ownership policies, private photo bucket, invoker RPCs,
+and blocked anonymous RPC execution. Cloud integration checks through local
+FastAPI passed for onboarding, meals, daily/calendar totals, weight records, and
+two-user isolation. Removed both temporary test accounts and their records.
+Email confirmation remains enabled; delivery and production signup are untested.
+
+Netlify is the selected frontend host, configured by root `netlify.toml`.
+Frontend and API publication remain pending. Earlier entries describe historical state.

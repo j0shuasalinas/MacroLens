@@ -2,12 +2,9 @@
 
 Repository: https://github.com/j0shuasalinas/MacroLens
 
-The code is prepared for Render (API + static frontend) and hosted Supabase (database + auth).
-It has not been deployed. A working public release needs all three; the local Supabase URLs
-and keys are development-only and cannot serve a deployed app.
-
-If using this chat to deploy, install/connect Render and Supabase so their actual projects
-and services can be selected. No hosting credentials were found in this workspace.
+Deployment targets: Netlify (web), Render (FastAPI), and hosted Supabase (database + auth).
+Hosted Supabase is configured and integration-tested. Web and API publication remain pending.
+Never use a localhost API URL in a production web build.
 
 ## 1. Hosted Supabase
 
@@ -47,12 +44,13 @@ See [Render free-service limits](https://render.com/docs/free).
 Once deployed, record the actual API HTTPS URL from Render and check `/health`.
 This only proves process liveness; authentication and providers require separate checks.
 
-## 3. Render frontend
+## 3. Netlify frontend
 
-Create a second Blueprint from the same repo/branch using `render-web.yaml`.
-The repo-root build command enters `apps/client`, installs from the npm lockfile, and exports
-its web build. Publish directory: `apps/client/dist`. It pins Node 26.10.0, the locally tested
-version supported by this Expo SDK. The blueprint includes SPA fallback and static headers.
+Import `j0shuasalinas/MacroLens` from GitHub, branch `main`. Root `netlify.toml` sets
+base directory `apps/client`, build command `npm run build:web`, publish directory
+`dist`, and Node 26.10.0. Netlify installs dependencies from the npm lockfile.
+Expo copies `public/_redirects` (SPA fallback) and `public/_headers` into `dist`.
+Use Netlify's assigned HTTPS URL initially; a custom domain is optional.
 
 Supply only these public client variables:
 
@@ -77,9 +75,16 @@ After the frontend URL is assigned:
 Web and API both need verified HTTPS. No deployment is considered successful until the
 actual URLs and these checks work. Native clients can then use the same API HTTPS URL.
 
-## Current handoff
+## Current status (2026-10-16)
 
-GitHub contains the implementation, migration and deployment files. Local configuration
-remains local. To continue deployment in chat, install/connect Render and Supabase, then
-select the intended projects. No cloud resources, data transfer, paid plan or public URL
-were created during this preparation.
+Hosted Supabase project `fiqfhrjrhwlnewcjqbkv` has all three migrations applied
+through SQL Editor. Cloud checks passed for authentication, onboarding, meals,
+daily/calendar totals, weight logs, and isolation between two temporary users.
+The test users and their records were removed. Email confirmation remains enabled;
+email delivery has not been tested.
+
+Ignored local environment files use the cloud project. Auth Site URL currently
+points to `http://localhost:8082`; update it and the redirect allowlist after Netlify
+assigns the production URL. Backend hosting, Netlify publication, deployed Gemini
+analysis, and production signup remain pending. `render-web.yaml` is an optional
+alternative; use `netlify.toml` for the requested frontend deployment.

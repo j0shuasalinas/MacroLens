@@ -2,7 +2,7 @@
 
 These instructions configure deployment; no cloud deployment, APK compilation or iPhone installation has been verified.
 
-For the concrete GitHub → hosted Supabase → Render API/frontend sequence, see [Go live](GO_LIVE.md).
+For the concrete GitHub → hosted Supabase → Render API → Netlify web sequence, see [Go live](GO_LIVE.md).
 
 ## Web production build
 

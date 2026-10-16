@@ -161,4 +161,4 @@ available from the calendar. Empty dates mean no entries, not zero food consumed
 Apply `003_nutrition_calendar.sql` to existing cloud databases before deploying this update.
 The local migration is already applied. See [calendar details](docs/CALENDAR.md).
 
-To deploy from this GitHub repository, follow the [Go-live guide](docs/GO_LIVE.md). Render API and frontend blueprints are provided separately so the real API URL can be supplied before the web build.
+To deploy from this GitHub repository, follow the [Go-live guide](docs/GO_LIVE.md). A Render API blueprint and Netlify web configuration are provided so the real API URL can be supplied before the web build.
