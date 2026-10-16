@@ -2,6 +2,8 @@
 
 These instructions configure deployment; no cloud deployment, APK compilation or iPhone installation has been verified.
 
+For the concrete GitHub → hosted Supabase → Render API/frontend sequence, see [Go live](GO_LIVE.md).
+
 ## Web production build
 
 From `apps/client`, populate `.env` with the real public Supabase values and an HTTPS API URL:

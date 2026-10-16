@@ -98,3 +98,16 @@ Browser verification used a disposable account with four synthetic meals: month 
 800 kcal from two meals on one date, another day's 650 kcal meal, monthly counts/average,
 phone-sized rendering, selecting dates, and pre-filling the chosen day in the meal editor.
 No real user records were modified. The synthetic account is removed after verification.
+
+## Deployment preparation
+
+Built the API Docker image locally using Python 3.12. Verified its actual production startup
+command on a loopback-only test port: `/health` returned 200 and unauthenticated `/meals`
+returned 401. Confirmed it runs as a non-root user and `/app/.env` is absent. The disposable
+container was stopped. This is a local container test, not a cloud deployment.
+
+Both `render.yaml` (API) and `render-web.yaml` (static frontend) parsed as YAML locally;
+Render-side validation/deployment still requires account access. The API uses the free
+preview plan explicitly; cold starts are documented. Provider secrets remain uncommitted.
+Render and Supabase integrations were discovered but not confirmed connected. No cloud
+project, public site, paid plan, or hosted data migration was created.
