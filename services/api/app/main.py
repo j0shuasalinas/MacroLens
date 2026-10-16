@@ -13,7 +13,9 @@ from PIL import Image, UnidentifiedImageError
 from google.genai.errors import APIError
 from pydantic import ValidationError
 from .config import settings
-from .models import Meal, Goals, Weight, Profile, totals
+from .models import Meal, Goals, Weight, Profile, totals, Onboarding, CoachRequest, CoachReply
+from .nutrition import suggest_goals
+from . import coach
 from .ai import provider, enrich
 
 logging.basicConfig(level=logging.INFO)
@@ -69,7 +71,7 @@ def limit(uid):
         if not buckets[key]:
             del buckets[key]
     if len(buckets[uid]) >= 5:
-        raise HTTPException(429, 'Five analyses per minute allowed', headers={'Retry-After':'60'})
+        raise HTTPException(429, 'Please wait a minute before sending another request', headers={'Retry-After':'60'})
     buckets[uid].append(now)
 
 @app.post('/analyze')
@@ -130,7 +132,9 @@ async def summary(day: date, actor=Depends(user)):
 
 @app.get('/summary/weekly')
 async def weekly(day: date, actor=Depends(user)):
-    return [{'day':str(day-timedelta(days=i)), **totals(await meals(day-timedelta(days=i), actor))} for i in range(6,-1,-1)]
+    start = day - timedelta(days=6)
+    rows = await db('GET', 'meals', actor, {'user_id': f"eq.{actor['id']}", 'and': f'(day.gte.{start},day.lte.{day})', 'select': 'day,items', 'limit': '1000'})
+    return [{'day': str(start + timedelta(days=i)), **totals([m for m in rows if m['day'] == str(start + timedelta(days=i))])} for i in range(7)]
 
 @app.get('/goals')
 async def goals(actor=Depends(user)):
@@ -186,3 +190,53 @@ async def progress(actor=Depends(user)):
             rate = round((float(entries[-1]['pounds'])-float(entries[0]['pounds']))/days*7,2)
     return {'weekly_averages':averages, 'observed_pounds_per_week':rate,
             'guidance':'Review 2–3 weeks of averages before considering a small calorie change. Targets are never changed automatically.'}
+
+
+@app.get('/onboarding')
+async def onboarding_status(actor=Depends(user)):
+    rows = await db('GET', 'profiles', actor, {'user_id': f"eq.{actor['id']}", 'select': 'onboarded_at'})
+    return {'completed': bool(rows and rows[0].get('onboarded_at'))}
+
+
+@app.post('/onboarding/suggest', response_model=Goals)
+async def onboarding_suggest(value: Profile, actor=Depends(user)):
+    try:
+        return suggest_goals(value)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+
+
+@app.post('/onboarding/complete')
+async def onboarding_complete(value: Onboarding, actor=Depends(user)):
+    if not value.profile.name.strip():
+        raise HTTPException(422, 'Please enter your name')
+    return await db('POST', 'rpc/complete_onboarding', actor, body={
+        'profile_data': value.profile.model_dump(), 'goal_data': value.goals.model_dump()})
+
+
+@app.post('/coach', response_model=CoachReply)
+async def coach_chat(value: CoachRequest, actor=Depends(user)):
+    if not value.message.strip():
+        raise HTTPException(422, 'Please enter a question')
+    limit('coach:' + actor['id'])
+    if not settings.gemini_api_key:
+        raise HTTPException(503, 'Coach is not configured yet. Please try again later.')
+    context = None
+    if value.include_context:
+        start = value.day - timedelta(days=6)
+        saved_goals, recent = await asyncio.gather(
+            db('GET', 'nutrition_goals', actor, {'user_id': f"eq.{actor['id']}", 'select': 'calories,protein,carbs,fat,objective'}),
+            db('GET', 'meals', actor, {'user_id': f"eq.{actor['id']}", 'and': f'(day.gte.{start},day.lte.{value.day})', 'order': 'day.desc,created_at.desc', 'limit': '200', 'select': 'day,items'})
+        )
+        context = {'goals': saved_goals[0] if saved_goals else None,
+                   'recent_days': [{'day': str(start + timedelta(days=i)), **totals([m for m in recent if m['day'] == str(start + timedelta(days=i))])} for i in range(7)],
+                   'note': 'At most 200 saved meals. Logs may be incomplete; zero logged is not zero eaten.'}
+    try:
+        text = await coach.reply(value, context)
+        return CoachReply(reply=text, used_context=context is not None)
+    except APIError as exc:
+        raise HTTPException(429 if exc.code == 429 else 502, 'Coach is busy. Try again in a moment.', headers={'Retry-After': '30'})
+    except (httpx.HTTPError, asyncio.TimeoutError):
+        raise HTTPException(504, 'Coach took too long to respond. Please try again.')
+    except ValueError:
+        raise HTTPException(502, 'Coach couldn’t finish that reply. Please try again.')

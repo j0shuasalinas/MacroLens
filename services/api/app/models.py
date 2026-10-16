@@ -57,3 +57,21 @@ def totals(meals):
             for key in result:
                 result[key] += item[key]
     return {key: round(value, 1) for key, value in result.items()}
+
+class Onboarding(Model):
+    profile: Profile
+    goals: Goals
+
+class ChatMessage(Model):
+    role: Literal['user', 'assistant']
+    text: str = Field(min_length=1, max_length=2000)
+
+class CoachRequest(Model):
+    message: str = Field(min_length=1, max_length=1500)
+    history: list[ChatMessage] = Field(default_factory=list, max_length=10)
+    include_context: bool = False
+    day: date
+
+class CoachReply(Model):
+    reply: str = Field(min_length=1, max_length=8000)
+    used_context: bool
