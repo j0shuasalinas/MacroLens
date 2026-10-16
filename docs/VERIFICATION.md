@@ -1,6 +1,6 @@
 # Verification record — October 15, 2026
 
-Final backend run: **12 passed**, including the opt-in real Supabase test.
+Final backend run: **16 passed**, including the opt-in real Supabase test.
 
 ## Verified locally
 
@@ -57,7 +57,34 @@ Final backend run: **12 passed**, including the opt-in real Supabase test.
 
 Ignored `.env` files currently point to the isolated local Supabase stack on port 55421.
 The development browser app uses port 8082 and API port 8010 because other local services
-occupied the default ports. No cloud/provider secrets were supplied. Use README commands
-with those ports to restart. Add Gemini/USDA keys only to the API env file.
+occupied the default ports. Provider keys are now configured only in the ignored backend env; no cloud Supabase credentials were supplied. Use README commands
+with those ports to restart. Keep Gemini/USDA keys only in the API env file.
 
 For repeatable commands and setup, see [README](../README.md) and [deployment guide](DEPLOYMENT.md).
+
+## Follow-up: interface and provider connectivity
+
+The interface was refreshed with light cards, calorie progress ring, colored macro cards,
+photo-first navigation, clearer meal review, and simpler profile choices. TypeScript, lint
+and the production web export passed. Desktop and 390×844 layouts, login and profile/goal
+saving were checked against local Supabase.
+
+User-supplied Gemini and USDA keys were moved from the tracked example into the ignored
+backend environment file; example placeholders were restored. Live Gemini connectivity
+(the configured model answering a short text prompt) and USDA food search both succeeded.
+A real food-photo analysis still needs verification. The backend runs on loopback port 8010.
+
+## Guided onboarding and coach verification
+
+- Applied migration 002 to local Supabase without resetting existing data.
+- Added tests for the deterministic calorie/macro calculator, adult/input validation,
+  completion status, atomic save, rollback, forged-owner resistance, coach opt-in privacy,
+  bounded history/roles, sanitized coach failures, and single-query weekly summaries.
+- Real local integration tests verified atomic onboarding and user isolation; synthetic
+  signup browser test completed all four steps, overrode calories, saved, reached Home,
+  and remained completed after reload.
+- A real Gemini coach request from the browser returned a meal suggestion with log sharing off.
+  No existing user's nutrition data was used for this test.
+- Desktop and 390×844 layouts were inspected. The test account is removed afterward.
+- No native device installation or latency benchmark was performed. Provider/network latency
+  varies; client sends are bounded, explicit, and have loading/error states rather than simulated speed.

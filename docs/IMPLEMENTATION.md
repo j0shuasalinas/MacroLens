@@ -1,6 +1,6 @@
 # Implementation checklist
 
-- [x] Shared Expo Router application, responsive emerald/dark design
+- [x] Shared Expo Router application, responsive photo-first design with emerald accents
 - [x] Supabase authentication and persistent sessions
 - [x] FastAPI verified authentication and user-scoped database access
 - [x] Gemini structured image analysis and USDA enrichment

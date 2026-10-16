@@ -2,7 +2,7 @@
 
 A shared Expo / React Native / TypeScript nutrition tracker for web, iOS and Android,
 with a FastAPI API, Supabase authentication/database and Gemini food-photo analysis.
-Premium charcoal and emerald styling, mobile bottom navigation and desktop sidebar.
+A light, photo-first interface with emerald accents, mobile bottom navigation and a desktop sidebar.
 
 Implemented: real email/password authentication, persistent sessions, protected screens,
 profile/onboarding, editable goals, photo picker/camera, Gemini structured analysis,
@@ -15,7 +15,7 @@ weekly averages, weight chart and account deletion.
 Use Node 22 LTS or a current compatible Node version, npm, and [uv](https://docs.astral.sh/uv/).
 The checked-in npm and uv lockfiles capture the tested dependencies.
 
-1. Create a Supabase project. Run `supabase/migrations/001_initial.sql` in its SQL editor.
+1. Create a Supabase project. Run `supabase/migrations/001_initial.sql` then `002_onboarding.sql` in its SQL editor.
    This creates the five tables, indexes, ownership policies and a private storage bucket.
 2. Enable email/password authentication. Set the Supabase Auth Site URL to your web origin
    and allow your development/production redirect URLs. Email confirmation is supported:
@@ -32,7 +32,7 @@ cp apps/client/.env.example apps/client/.env
 ```sh
 cd services/api
 uv sync --frozen
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8010
+uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8010
 ```
 
 5. Start the client in another terminal:
@@ -124,3 +124,29 @@ MACROLENS_LOCAL_STATUS=/tmp/macrolens-local-status.json services/api/.venv/bin/p
 
 To stop the local stack, use `supabase stop` from this repository. Do not use `--no-backup`
 unless intentionally discarding your local data.
+
+For a short, step-by-step guide to enabling real photo scans, see [API setup](docs/API_SETUP.md).
+The current interface uses a light, photo-first design with emerald accents, a calorie progress
+ring, macro cards, and a simplified profile flow.
+
+## Guided onboarding and Coach
+
+New sign-ups (or authenticated users without a completed plan) enter a four-step wizard:
+name/age/equation → height/weight/units → goal/activity/pace → editable suggested targets.
+Email-confirmation projects send users to this flow after they confirm and sign in. Completion
+saves profile and goals atomically. Returning users with a completed plan open Home directly.
+Existing users with both profile and goals are marked complete by migration 002.
+
+The **Coach** tab uses the existing backend Gemini key. Starter questions, follow-ups, error
+retries, and optional sharing of saved goals/recent nutrition totals are included. It cannot
+change records or targets. Conversations stay in app memory, not the database, and clear on
+New chat, sign-out or reload. Messages are sent to Google; sharing logs is off by default.
+
+For an existing local stack, apply the new migration without resetting data:
+
+```sh
+supabase migration up --local
+```
+
+Remote projects must also apply migration 002 before deploying the updated API/client.
+See [onboarding and coach details](docs/ONBOARDING_COACH.md).

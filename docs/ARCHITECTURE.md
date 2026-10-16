@@ -58,3 +58,10 @@ pagination before users exceed 500 meals / 1,000 weight logs.
 Profile suggestions use Mifflin–St Jeor (weight in kg, height cm, age years, equation sex), an
 activity multiplier, and 500 daily kcal per requested lb/week change. All inputs and calculated
 targets remain editable, and no targets change automatically based on weight fluctuations.
+
+## Guided onboarding and coach additions
+
+New authenticated routes: `GET /onboarding`, `POST /onboarding/suggest`,
+`POST /onboarding/complete`, and `POST /coach`. Apply migration 002 after migration 001.
+See [onboarding/coach design and limits](ONBOARDING_COACH.md). Onboarding completion now
+saves profile and goals atomically; ordinary Settings edits remain separate requests.
