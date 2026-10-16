@@ -1,0 +1,12 @@
+[build]
+  base = "apps/client"
+  command = "npm run build:web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "26.10.0"
+
+# Set EXPO_PUBLIC_API_URL, EXPO_PUBLIC_SUPABASE_URL, and
+# EXPO_PUBLIC_SUPABASE_ANON_KEY in Netlify's environment settings.
+# Expo copies public/_redirects and public/_headers into dist.
+# Private provider and service-role keys belong only on the API host.
