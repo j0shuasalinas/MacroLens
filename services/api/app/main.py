@@ -9,7 +9,7 @@ import httpx
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 from google.genai.errors import APIError
 from pydantic import ValidationError
 from .config import settings
@@ -77,20 +77,25 @@ def limit(uid):
 @app.post('/analyze')
 async def analyze(image: UploadFile = File(...), actor=Depends(user)):
     limit(actor['id'])
-    raw = await image.read(8 * 1024 * 1024 + 1)
-    if len(raw) > 8 * 1024 * 1024:
-        raise HTTPException(413, 'Maximum image size is 8 MB')
+    raw = await image.read(16 * 1024 * 1024 + 1)
+    if len(raw) > 16 * 1024 * 1024:
+        raise HTTPException(413, 'This photo is over 16 MB. Choose a smaller export or take a new photo.')
     try:
         with Image.open(io.BytesIO(raw)) as photo:
-            if photo.format not in ('JPEG','PNG','WEBP') or photo.width * photo.height > 25000000:
-                raise ValueError()
+            if photo.format not in ('JPEG','PNG','WEBP'):
+                raise HTTPException(415, 'This image format is not supported. Export HEIC/RAW photos as JPEG, or choose a PNG or WebP.')
+            if photo.width * photo.height > 64000000:
+                raise HTTPException(413, 'This photo is over 64 megapixels. Resize it or choose a smaller export.')
+            # JPEG draft decoding avoids loading the full-resolution phone image.
+            photo.draft('RGB', (1600,1600))
             photo.load()
             photo.thumbnail((1600,1600))
+            photo = ImageOps.exif_transpose(photo)
             output = io.BytesIO()
             photo.convert('RGB').save(output, format='JPEG', quality=85)
             raw = output.getvalue()  # Strip metadata; do not retain user photos.
     except (UnidentifiedImageError, ValueError, OSError, Image.DecompressionBombError):
-        raise HTTPException(415, 'Upload a valid JPEG, PNG or WebP under 25 megapixels')
+        raise HTTPException(415, 'We couldn’t read this photo. Try a different JPEG, PNG or WebP, or take a new photo.')
     if not settings.gemini_api_key:
         raise HTTPException(503, 'Meal analysis is not configured')
     try:

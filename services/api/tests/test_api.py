@@ -78,7 +78,7 @@ def test_weight_and_validation(authenticated,monkeypatch):
 
 def test_upload_validation_and_limit(authenticated):
     assert authenticated.post('/analyze',files={'image':('x.jpg',b'not image','image/jpeg')}).status_code==415
-    assert authenticated.post('/analyze',files={'image':('x.jpg',b'x'*(8*1024*1024+1),'image/jpeg')}).status_code==413
+    assert authenticated.post('/analyze',files={'image':('x.jpg',b'x'*(16*1024*1024+1),'image/jpeg')}).status_code==413
     for _ in range(3): authenticated.post('/analyze',files={'image':('x',b'x')})
     assert authenticated.post('/analyze',files={'image':('x',b'x')}).status_code==429
 
@@ -95,6 +95,30 @@ def test_ai_workflow(authenticated,monkeypatch):
     assert response.status_code==200
     assert response.json()['items'][0]['calories']==130
     assert 'USDA unavailable' in response.json()['warnings'][-1]
+
+def test_high_resolution_phone_photo(authenticated,monkeypatch):
+    monkeypatch.setattr(settings,'gemini_api_key','test')
+    monkeypatch.setattr(settings,'usda_api_key','')
+    class Fake:
+        async def analyze(self,raw,mime):
+            with Image.open(io.BytesIO(raw)) as photo:
+                assert photo.format=='JPEG' and max(photo.size)<=1600
+                assert not photo.getexif()
+                assert photo.height>photo.width  # EXIF rotation retained visually.
+            return Analysis(items=[Food(**food())],warnings=[])
+    monkeypatch.setattr(main,'provider',lambda:Fake())
+    image=io.BytesIO()
+    with Image.new('RGB',(8000,6000),'green') as photo:
+        exif=Image.Exif();exif[274]=6
+        photo.save(image,format='JPEG',exif=exif)
+    response=authenticated.post('/analyze',files={'image':('phone.jpg',image.getvalue(),'image/jpeg')})
+    assert response.status_code==200,response.text
+
+def test_unsupported_image_has_format_specific_error(authenticated):
+    image=io.BytesIO();Image.new('RGB',(10,10)).save(image,format='GIF')
+    response=authenticated.post('/analyze',files={'image':('meal.gif',image.getvalue(),'image/gif')})
+    assert response.status_code==415
+    assert 'format' in response.json()['detail'] and 'megapixels' not in response.json()['detail']
 
 def test_not_found_and_upstream(authenticated,monkeypatch):
     async def empty(*args,**kwargs):return []
