@@ -2,6 +2,7 @@ services:
   - type: web
     name: macrolens-api
     runtime: docker
+    plan: free
     rootDir: services/api
     healthCheckPath: /health
     envVars:
