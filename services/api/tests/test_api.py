@@ -208,3 +208,21 @@ def test_weekly_single_owner_scoped_read(authenticated,monkeypatch):
     assert len(calls)==1 and len(result.json())==7
     assert result.json()[-1]['calories']==130
     assert result.json()[0]['calories']==0
+
+
+def test_calendar_validation_and_owner_token(authenticated, monkeypatch):
+    calls=[]
+    async def db(method,table,actor,params=None,body=None):
+        calls.append((method,table,actor,body))
+        return [{'day':'2024-02-29','calories':'260','protein':6,'carbs':56,'fat':2,'meal_count':2}]
+    monkeypatch.setattr(main,'db',db)
+    response=authenticated.get('/calendar?year=2024&month=2')
+    assert response.status_code==200
+    assert response.json()[0]['calories']==260
+    assert calls[-1][1]=='rpc/nutrition_calendar'
+    assert calls[-1][2]['authorization']=='Bearer test'
+    assert calls[-1][3]=={'month_start':'2024-02-01'}
+    for params in ['year=2024&month=13','year=0&month=1','year=2024&month=0']:
+        assert authenticated.get('/calendar?'+params).status_code==422
+    app.dependency_overrides.clear()
+    assert authenticated.get('/calendar?year=2024&month=2').status_code==401

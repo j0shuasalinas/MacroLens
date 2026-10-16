@@ -38,6 +38,14 @@ def test_real_persistence_and_rls(monkeypatch):
             assert len(client.get('/meals',headers=a).json())==1
             assert client.get('/summary?day=2026-10-15',headers=a).json()['calories']==130
             assert client.get('/summary?day=2026-10-15',headers=b).json()['calories']==0
+            calendar=client.get('/calendar?year=2026&month=10',headers=a)
+            assert calendar.status_code==200 and len(calendar.json())==31
+            logged=next(day for day in calendar.json() if day['day']=='2026-10-15')
+            assert logged['calories']==130 and logged['meal_count']==1
+            assert all(day['meal_count']==0 for day in client.get('/calendar?year=2026&month=10',headers=b).json())
+            leap=client.get('/calendar?year=2024&month=2',headers=a).json()
+            assert len(leap)==29 and leap[-1]['day']=='2024-02-29'
+
             direct_a={'apikey':key,**a};direct_b={'apikey':key,**b}
             assert len(httpx.get(url+'/rest/v1/meal_items',headers=direct_a).json())==1
             assert httpx.get(url+'/rest/v1/meal_items',headers=direct_b).json()==[]
@@ -66,8 +74,17 @@ def test_real_persistence_and_rls(monkeypatch):
             assert client.get('/profile',headers=b).json()['name']=='User B'
 
             assert client.put('/meals/'+mid,headers=a,json={**payload,'title':'Edited'}).json()['title']=='Edited'
+            # Moving/editing a meal changes the calendar date and recalculates all items.
+            changed={**payload,'day':'2026-10-16','items':payload['items']*2}
+            assert client.put('/meals/'+mid,headers=a,json=changed).status_code==200
+            moved=client.get('/calendar?year=2026&month=10',headers=a).json()
+            assert next(d for d in moved if d['day']=='2026-10-15')['meal_count']==0
+            assert next(d for d in moved if d['day']=='2026-10-16')['calories']==260
+            assert next(d for d in moved if d['day']=='2026-10-16')['meal_count']==1
+
             assert client.delete('/meals/'+mid,headers=a).status_code==200
             assert httpx.get(url+'/rest/v1/meal_items',headers=direct_a).json()==[]
+            assert all(d['meal_count']==0 for d in client.get('/calendar?year=2026&month=10',headers=a).json())
             assert client.delete('/account',headers=a).status_code==200
             assert client.get('/meals',headers=a).status_code==401
             # Auth deletion cascades saved profile, targets and weight.
