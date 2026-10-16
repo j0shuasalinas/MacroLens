@@ -11,6 +11,9 @@ export const supabase = createClient(url || 'https://unconfigured.supabase.co', 
 });
 export const apiUrl = process.env.EXPO_PUBLIC_API_URL || (__DEV__ ? 'http://localhost:8010' : '');
 if (!__DEV__ && !apiUrl.startsWith('https://')) throw new Error('Production EXPO_PUBLIC_API_URL must use HTTPS');
+export class ApiError extends Error {
+  constructor(message: string, public status: number, public retryAfterSeconds = 0) { super(message); }
+}
 export async function api(path: string, method = 'GET', body?: unknown) {
   const { data } = await supabase.auth.getSession();
   const controller = new AbortController();
@@ -22,8 +25,16 @@ export async function api(path: string, method = 'GET', body?: unknown) {
       body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'Please check your input and retry.');
+    if (!response.ok) {
+      const guidance = response.headers.get('Retry-After');
+      const seconds = guidance ? Number(guidance) : 0;
+      const retryAfter = Number.isFinite(seconds) ? Math.max(0, seconds) : Math.max(0, (Date.parse(guidance || '') - Date.now()) / 1000) || 0;
+      throw new ApiError(typeof result.detail === 'string' ? result.detail : 'Please check your input and retry.', response.status, Math.ceil(retryAfter));
+    }
     return result;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') throw new Error('The request timed out. Retrying has stopped. Please try again later.');
+    throw error;
   } finally { clearTimeout(timer); }
 }
 export type Food = { name: string; grams: number; calories: number; protein: number; carbs: number; fat: number; confidence: 'low' | 'medium' | 'high'; uncertainty: string; source: string; fdc_id?: number | null };

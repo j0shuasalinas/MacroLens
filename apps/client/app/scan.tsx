@@ -1,15 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, Platform, ScrollView, Text, View, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { router } from 'expo-router';
-import { api, today, useDraft } from '../src/api';
+import { api, ApiError, today, useDraft } from '../src/api';
 import { Button, Card, s, colors } from '../src/ui';
 
 export default function Scan() {
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [retryAt, setRetryAt] = useState(0);
+  const [remaining, setRemaining] = useState(0);
+  useEffect(() => {
+    if (!retryAt) return;
+    const tick = () => {
+      const seconds = Math.max(0, Math.ceil((retryAt - Date.now()) / 1000));
+      setRemaining(seconds);
+      if (!seconds) setRetryAt(0);
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [retryAt]);
   async function choose(camera: boolean) {
     setError('');
     try {
@@ -20,7 +33,7 @@ export default function Scan() {
     } catch (e) { setError((e as Error).message); }
   }
   async function analyze() {
-    if (!photo) return;
+    if (!photo || busy || Date.now() < retryAt) return;
     setBusy(true); setError('');
     try {
       // Normalize phone photos before sending: quality alone does not reduce dimensions.
@@ -41,6 +54,10 @@ export default function Scan() {
       useDraft.getState().setMeal({ title: 'Photo meal', day: today(), category: 'lunch', items: result.items });
       router.push({ pathname: '/review', params: { warnings: result.warnings.join('\n') } });
     } catch (e) {
+      if (e instanceof ApiError && (e.status === 429 || e.status === 503) && e.retryAfterSeconds > 0) {
+        setRemaining(e.retryAfterSeconds);
+        setRetryAt(Date.now() + e.retryAfterSeconds * 1000);
+      }
       const message = (e as Error).message;
       setError(message.includes('not configured') ? 'Photo scanning isn’t set up yet. You can still enter your meal manually.' : message);
     } finally { setBusy(false); }
@@ -56,7 +73,7 @@ export default function Scan() {
         </View>}
       {busy && <View style={{ position: 'absolute', inset: 0, backgroundColor: '#ffffffeb', alignItems: 'center', justifyContent: 'center', gap: 18 }}><ActivityIndicator size="large" color={colors.green} /><Text style={s.label}>Taking a closer look…</Text><Text style={s.subtitle}>This can take a little while.</Text></View>}
     </View>
-    {photo ? <><Button title={busy ? 'Analyzing your meal…' : 'Get nutrition estimate →'} disabled={busy} onPress={analyze} /><Button quiet title="Choose a different photo" disabled={busy} onPress={() => choose(false)} /></> :
+    {photo ? <><Button title={busy ? 'Analyzing your meal…' : remaining ? `Try again in ${remaining}s` : 'Get nutrition estimate →'} disabled={busy || remaining > 0} onPress={analyze} /><Button quiet title="Choose a different photo" disabled={busy} onPress={() => choose(false)} /></> :
       <><Button title="Take a food photo" disabled={busy} onPress={() => choose(true)} /><Button title="Choose from photos" quiet disabled={busy} onPress={() => choose(false)} /></>}
     {!!error && <Card><Text accessibilityRole="alert" style={s.error}>{error}</Text></Card>}
     <Button quiet title="Enter a meal manually" disabled={busy} onPress={() => router.push('/review')} />
