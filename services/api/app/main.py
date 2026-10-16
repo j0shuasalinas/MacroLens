@@ -6,14 +6,14 @@ from collections import defaultdict, deque
 from datetime import date, timedelta
 from uuid import UUID
 import httpx
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, Request
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from PIL import Image, UnidentifiedImageError
 from google.genai.errors import APIError
 from pydantic import ValidationError
 from .config import settings
-from .models import Meal, Goals, Weight, Profile, totals, Onboarding, CoachRequest, CoachReply
+from .models import Meal, Goals, Weight, Profile, totals, Onboarding, CoachRequest, CoachReply, CalendarDay
 from .nutrition import suggest_goals
 from . import coach
 from .ai import provider, enrich
@@ -240,3 +240,8 @@ async def coach_chat(value: CoachRequest, actor=Depends(user)):
         raise HTTPException(504, 'Coach took too long to respond. Please try again.')
     except ValueError:
         raise HTTPException(502, 'Coach couldn’t finish that reply. Please try again.')
+
+
+@app.get('/calendar', response_model=list[CalendarDay])
+async def calendar_month(year: int = Query(ge=1, le=9998), month: int = Query(ge=1, le=12), actor=Depends(user)):
+    return await db('POST', 'rpc/nutrition_calendar', actor, body={'month_start': str(date(year, month, 1))})

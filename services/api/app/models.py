@@ -75,3 +75,11 @@ class CoachRequest(Model):
 class CoachReply(Model):
     reply: str = Field(min_length=1, max_length=8000)
     used_context: bool
+
+class CalendarDay(Model):
+    day: date
+    calories: float = Field(ge=0)
+    protein: float = Field(ge=0)
+    carbs: float = Field(ge=0)
+    fat: float = Field(ge=0)
+    meal_count: int = Field(ge=0)
