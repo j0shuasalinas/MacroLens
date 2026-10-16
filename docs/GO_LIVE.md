@@ -3,7 +3,11 @@
 Repository: https://github.com/j0shuasalinas/MacroLens
 
 Deployment targets: Netlify (web), Render (FastAPI), and hosted Supabase (database + auth).
-Hosted Supabase is configured and integration-tested. Web and API publication remain pending.
+Web and API are deployed, and hosted Supabase is configured and integration-tested.
+
+- Web: https://macrolens-joshua.netlify.app
+- API: https://macrolens-api-ce7g.onrender.com
+- API health: https://macrolens-api-ce7g.onrender.com/health
 Never use a localhost API URL in a production web build.
 
 ## 1. Hosted Supabase
@@ -32,7 +36,7 @@ Supply backend variables:
 - `SUPABASE_ANON_KEY`: its publishable/anon key
 - `SUPABASE_SERVICE_ROLE_KEY`: its private admin key (account deletion)
 - `GEMINI_API_KEY` and `USDA_API_KEY`: the keys already configured locally, entered into Render's secret settings
-- `CORS_ORIGINS`: final exact web origin (can initially be empty until the frontend URL is assigned)
+- `CORS_ORIGINS`: final exact HTTPS web origin; enter it before the initial API deploy (omitting it uses a localhost default, which production rejects)
 
 `ENVIRONMENT=production` is declared in the blueprint. The blueprint explicitly uses the
 free compute plan for an initial personal preview, avoiding Render's paid default. Review
@@ -83,8 +87,20 @@ daily/calendar totals, weight logs, and isolation between two temporary users.
 The test users and their records were removed. Email confirmation remains enabled;
 email delivery has not been tested.
 
-Ignored local environment files use the cloud project. Auth Site URL currently
-points to `http://localhost:8082`; update it and the redirect allowlist after Netlify
-assigns the production URL. Backend hosting, Netlify publication, deployed Gemini
-analysis, and production signup remain pending. `render-web.yaml` is an optional
-alternative; use `netlify.toml` for the requested frontend deployment.
+Ignored local environment files use the cloud project. Supabase Auth Site URL is
+`https://macrolens-joshua.netlify.app`, with that site's redirect paths allowed alongside
+local development URLs. Render CORS allows only this exact production web origin.
+
+Render service `srv-db8ro47avr4c73c40mag` runs on the free plan, from public GitHub
+source. This public-repository connection does not provide automatic code deploys;
+manually deploy the latest commit in Render after backend changes. Netlify is connected
+to GitHub `main` with automatic publishing. Server credentials are in Render's environment;
+Netlify contains only the three public client values.
+
+Verified deployed health, authentication enforcement, CORS allow/deny, onboarding,
+meal save/edit, daily/calendar totals, weights, and two-user isolation. Disposable test
+accounts and records were removed. Web HTTPS, direct-route refresh, manifest/icons,
+service-worker cache headers and initial bundles were checked. The public login page renders.
+Google returned temporary high-demand errors during the initial Gemini check. Real food-photo
+analysis, email delivery/confirmation, and native-device builds/installations remain unverified.
+`render-web.yaml` remains an optional alternative; the deployed web app uses `netlify.toml`.

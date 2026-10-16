@@ -124,3 +124,20 @@ Email confirmation remains enabled; delivery and production signup are untested.
 
 Netlify is the selected frontend host, configured by root `netlify.toml`.
 Frontend and API publication remain pending. Earlier entries describe historical state.
+
+
+## Public deployment — 2026-10-16
+
+- Netlify: https://macrolens-joshua.netlify.app (GitHub main, commit 2a5fe81).
+- Render API: https://macrolens-api-ce7g.onrender.com (Docker, free plan).
+- Deployed health 200, unauthenticated requests 401, approved CORS origin accepted,
+  unapproved origin rejected. Production auth Site URL and redirect allowlist saved.
+- Through the deployed API: onboarding, meal save/edit, daily/calendar totals, weights
+  and two-user isolation passed. Temporary accounts and records removed.
+- Web HTTPS, auth/calendar deep links, manifest/icons, service-worker no-cache headers,
+  real service URLs, and no private keys in initial bundles passed. Login screen rendered.
+- Initial Gemini coach calls returned 502; a direct diagnostic returned Google 503
+  UNAVAILABLE due to model high demand. Food-photo analysis and email delivery remain
+  unverified. No native build or device installation was performed.
+- Initial host attempts failed on missing environment configuration. Corrected Render's
+  HTTPS CORS origin and saved Netlify's public variables; subsequent deployments succeeded.

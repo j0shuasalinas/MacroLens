@@ -1,6 +1,6 @@
 # Deployment and device installation
 
-These instructions configure deployment; no cloud deployment, APK compilation or iPhone installation has been verified.
+The web frontend and FastAPI backend are deployed; see [Go live](GO_LIVE.md) for URLs and verified checks. APK compilation and iPhone installation remain unverified.
 
 For the concrete GitHub → hosted Supabase → Render API → Netlify web sequence, see [Go live](GO_LIVE.md).
 
