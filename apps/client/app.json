@@ -1,10 +1,55 @@
 {
- "expo": {
-  "name":"MacroLens", "slug":"macrolens", "version":"1.0.0", "scheme":"macrolens", "orientation":"portrait", "userInterfaceStyle":"dark",
-  "icon":"./assets/icon.png",
-  "ios":{"bundleIdentifier":"com.macrolens.app","supportsTablet":true,"infoPlist":{"NSCameraUsageDescription":"Photograph meals to estimate nutrition.","NSPhotoLibraryUsageDescription":"Select meal photos to estimate nutrition.","ITSAppUsesNonExemptEncryption":false}},
-  "android":{"package":"com.macrolens.app","adaptiveIcon":{"foregroundImage":"./assets/adaptive-icon.png","backgroundColor":"#0a1110"}},
-  "web":{"bundler":"metro","output":"single","favicon":"./assets/favicon.png","name":"MacroLens","shortName":"MacroLens","themeColor":"#0a1110","backgroundColor":"#0a1110"},
-  "plugins":["expo-router",["expo-image-picker",{"photosPermission":"Select meal photos to estimate nutrition.","cameraPermission":"Photograph meals to estimate nutrition.","microphonePermission":false}],["expo-splash-screen",{"image":"./assets/splash.png","imageWidth":200,"backgroundColor":"#0a1110"}]]
- }
+  "expo": {
+    "name": "MacroLens",
+    "slug": "macrolens",
+    "version": "1.0.0",
+    "scheme": "macrolens",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "ios": {
+      "bundleIdentifier": "com.macrolens.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Photograph meals to estimate nutrition.",
+        "NSPhotoLibraryUsageDescription": "Select meal photos to estimate nutrition.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.macrolens.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a1110"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "MacroLens",
+      "shortName": "MacroLens",
+      "themeColor": "#f7f8f5",
+      "backgroundColor": "#f7f8f5"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Select meal photos to estimate nutrition.",
+          "cameraPermission": "Photograph meals to estimate nutrition.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 200,
+          "backgroundColor": "#0a1110"
+        }
+      ]
+    ]
+  }
 }
