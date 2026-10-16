@@ -33,8 +33,8 @@ function AuthenticatedLayout() {
   const desktop = width > 850;
   const nav = <View style={{ gap: desktop ? 8 : 0, width: desktop ? 218 : '100%', flexDirection: desktop ? 'column' : 'row', padding: desktop ? 22 : 8, backgroundColor: colors.card, borderRightWidth: desktop ? 1 : 0, borderTopWidth: desktop ? 0 : 1, borderColor: colors.border }}>
     {desktop && <View style={{ gap: 6, marginBottom: 36, marginTop: 12 }}><Text style={{ color: colors.text, fontSize: 25, fontWeight: '800', letterSpacing: -1 }}>◉ MacroLens</Text><Text style={{ color: colors.muted, fontSize: 12 }}>A little clarity, every day.</Text></View>}
-    {([['Home','⌂','/'],['Journal','▤','/history'],['Scan','＋','/scan'],['Coach','✧','/coach'],['Profile','⚙','/settings']] as const).map(([label, icon, href]) => {
-      const selected = path === href || (href === '/scan' && path === '/review');
+    {([['Home','⌂','/'],['Calendar','▦','/calendar'],['Scan','＋','/scan'],['Coach','✧','/coach'],['Profile','⚙','/settings']] as const).map(([label, icon, href]) => {
+      const selected = path === href || (href === '/scan' && path === '/review') || (href === '/calendar' && path === '/history');
       const scan = href === '/scan';
       return <Pressable accessibilityRole="button" accessibilityLabel={scan ? 'Scan a meal' : label} accessibilityState={{ selected }} key={href} onPress={() => router.push(href)}
         style={{ flex: desktop ? undefined : 1, minHeight: 56, paddingVertical: desktop ? 13 : 3, paddingHorizontal: desktop ? 12 : 0, borderRadius: 16, gap: desktop ? 13 : 3, flexDirection: desktop ? 'row' : 'column', alignItems: 'center', justifyContent: desktop ? 'flex-start' : 'center', backgroundColor: desktop && selected ? colors.soft : 'transparent' }}>
