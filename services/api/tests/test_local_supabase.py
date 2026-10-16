@@ -48,6 +48,23 @@ def test_real_persistence_and_rls(monkeypatch):
             assert client.put('/goals',headers=a,json={'calories':2900}).status_code==200
             assert client.put('/profile',headers=a,json={'name':'Test','age':21,'height_cm':175,'activity':1.55,'current_weight':165,'goal_weight':175,'objective':'Lean bulk','weekly_change':.25,'sex':'male'}).status_code==200
             assert client.get('/profile',headers=b).json() is None
+            profile={'name':'Onboarded','age':21,'height_cm':175,'activity':1.55,'current_weight':165,'goal_weight':175,'objective':'Lean bulk','weekly_change':.25,'sex':'male'}
+            assert client.get('/onboarding',headers=a).json()['completed'] is False
+            suggested=client.post('/onboarding/suggest',headers=a,json=profile).json()
+            completed=client.post('/onboarding/complete',headers=a,json={'profile':profile,'goals':suggested})
+            assert completed.status_code==200 and completed.json()['completed'] is True
+            assert client.get('/onboarding',headers=a).json()['completed'] is True
+            assert client.get('/onboarding',headers=b).json()['completed'] is False
+            # The RPC is a single transaction: invalid goals must roll back profile changes.
+            bad=httpx.post(url+'/rest/v1/rpc/complete_onboarding',headers=direct_a,json={'profile_data':{**profile,'name':'Must roll back'},'goal_data':{**suggested,'fat':-1}})
+            assert bad.status_code>=400
+            assert client.get('/profile',headers=a).json()['name']=='Onboarded'
+            # Even a forged user id inside JSON cannot choose another user's record.
+            own=httpx.post(url+'/rest/v1/rpc/complete_onboarding',headers=direct_b,json={'profile_data':{**profile,'user_id':users[0][0],'name':'User B'},'goal_data':suggested})
+            assert own.status_code==200
+            assert client.get('/profile',headers=a).json()['name']=='Onboarded'
+            assert client.get('/profile',headers=b).json()['name']=='User B'
+
             assert client.put('/meals/'+mid,headers=a,json={**payload,'title':'Edited'}).json()['title']=='Edited'
             assert client.delete('/meals/'+mid,headers=a).status_code==200
             assert httpx.get(url+'/rest/v1/meal_items',headers=direct_a).json()==[]
