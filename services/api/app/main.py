@@ -45,14 +45,39 @@ async def upstream(request: Request, exc: Exception):
 def health():
     return {'status':'ok'}
 
+@app.get('/ready')
+async def ready():
+    # Deliberately separate from Render's liveness probe: database checks must
+    # not run on every /health request or be used to defeat free-tier pauses.
+    checks = {'auth': False, 'database': False}
+    if settings.supabase_url and settings.supabase_anon_key:
+        async with httpx.AsyncClient(timeout=5) as client:
+            async def check(name, path, params=None):
+                try:
+                    response = await client.get(settings.supabase_url + path,
+                        headers={'apikey': settings.supabase_anon_key}, params=params)
+                    checks[name] = response.status_code == 200
+                except httpx.HTTPError:
+                    pass
+            await asyncio.gather(check('auth', '/auth/v1/settings'),
+                check('database', '/rest/v1/profiles', {'select': 'user_id', 'limit': '0'}))
+    available = all(checks.values())
+    return JSONResponse(status_code=200 if available else 503,
+        content={'status': 'ready' if available else 'unavailable', 'checks': checks},
+        headers={'Cache-Control': 'no-store'})
+
 async def user(authorization: str = Header(default='')):
     if not authorization.startswith('Bearer ') or not settings.supabase_url:
         raise HTTPException(401, 'Authentication required')
     async with httpx.AsyncClient(timeout=15) as client:
         response = await client.get(settings.supabase_url + '/auth/v1/user',
             headers={'apikey':settings.supabase_anon_key, 'Authorization':authorization})
-    if response.status_code != 200:
+    if response.status_code in (401, 403):
         raise HTTPException(401, 'Invalid or expired session')
+    if response.status_code != 200:
+        logger.warning('Authentication service unavailable status=%d', response.status_code)
+        raise HTTPException(503, 'Sign-in service is temporarily unavailable. If the Supabase project is paused or restoring, resume it and wait for it to finish.',
+            headers={'Retry-After': '30'})
     return {'id':str(UUID(response.json()['id'])), 'authorization':authorization}
 
 async def db(method, table, actor, params=None, body=None):

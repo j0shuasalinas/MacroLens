@@ -262,3 +262,40 @@ def test_scan_provider_errors_stop(authenticated,monkeypatch,upstream,status,phr
     r=authenticated.post('/analyze',files={'image':('food.jpg',image.getvalue(),'image/jpeg')})
     assert r.status_code==status and phrase in r.json()['detail'] and 'busy' not in r.json()['detail']
     if upstream==429:assert r.headers['Retry-After']=='37'
+
+@pytest.mark.parametrize('status',[429,500,503,521])
+def test_auth_outage_is_not_expired_session(client,monkeypatch,status):
+    monkeypatch.setattr(settings,'supabase_url','https://example.supabase.co')
+    async def get(*args,**kwargs):return httpx.Response(status,json={})
+    monkeypatch.setattr(httpx.AsyncClient,'get',get)
+    response=client.get('/meals',headers={'Authorization':'Bearer existing-session'})
+    assert response.status_code==503 and response.headers['Retry-After']=='30'
+    assert 'paused or restoring' in response.json()['detail']
+    assert 'expired' not in response.text
+
+@pytest.mark.parametrize('auth_status,db_status,expected',[(200,200,200),(521,503,503),(200,503,503)])
+def test_readiness_checks_dependencies_without_private_data(client,monkeypatch,auth_status,db_status,expected):
+    monkeypatch.setattr(settings,'supabase_url','https://example.supabase.co')
+    monkeypatch.setattr(settings,'supabase_anon_key','public-test-key')
+    calls=[]
+    async def get(self,url,**kwargs):
+        calls.append((url,kwargs))
+        return httpx.Response(auth_status if '/auth/' in url else db_status,json={})
+    monkeypatch.setattr(httpx.AsyncClient,'get',get)
+    response=client.get('/ready')
+    assert response.status_code==expected
+    assert response.json()['checks']=={'auth':auth_status==200,'database':db_status==200}
+    assert response.headers['Cache-Control']=='no-store'
+    db_call=next(c for c in calls if '/rest/' in c[0])
+    assert db_call[1]['params']['limit']=='0'
+    assert 'public-test-key' not in response.text
+    assert client.get('/health').status_code==200
+
+def test_readiness_handles_transport_failure(client,monkeypatch):
+    monkeypatch.setattr(settings,'supabase_url','https://example.supabase.co')
+    monkeypatch.setattr(settings,'supabase_anon_key','test')
+    async def get(*args,**kwargs):raise httpx.ConnectError('private-network-details')
+    monkeypatch.setattr(httpx.AsyncClient,'get',get)
+    r=client.get('/ready')
+    assert r.status_code==503 and r.json()['checks']=={'auth':False,'database':False}
+    assert 'private-network-details' not in r.text
