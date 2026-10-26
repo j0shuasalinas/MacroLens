@@ -79,7 +79,7 @@ After the frontend URL is assigned:
 Web and API both need verified HTTPS. No deployment is considered successful until the
 actual URLs and these checks work. Native clients can then use the same API HTTPS URL.
 
-## Current status (2026-10-16)
+## Initial deployment status (2026-10-16)
 
 Hosted Supabase project `fiqfhrjrhwlnewcjqbkv` has all three migrations applied
 through SQL Editor. Cloud checks passed for authentication, onboarding, meals,
@@ -104,3 +104,10 @@ service-worker cache headers and initial bundles were checked. The public login 
 Google returned temporary high-demand errors during the initial Gemini check. Real food-photo
 analysis, email delivery/confirmation, and native-device builds/installations remain unverified.
 `render-web.yaml` remains an optional alternative; the deployed web app uses `netlify.toml`.
+
+## Recovery (2026-10-25)
+
+Resumed the paused Supabase project and verified a real deployed photo-analysis request,
+USDA enrichment, meal saving, daily/calendar totals and weight logging. See
+[Recovery instructions and verification](RECOVERY.md) for dependency readiness checks,
+the inference-timeout correction, and the limits of free hosting.

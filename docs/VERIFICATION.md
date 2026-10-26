@@ -141,3 +141,23 @@ Frontend and API publication remain pending. Earlier entries describe historical
   unverified. No native build or device installation was performed.
 - Initial host attempts failed on missing environment configuration. Corrected Render's
   HTTPS CORS origin and saved Netlify's public variables; subsequent deployments succeeded.
+
+
+## Paused-project recovery — 2026-10-25–26
+
+Resumed the intended Supabase project and waited for Healthy. Supabase auth returned
+521 during restoration and 200 afterwards. Public frontend/API health returned 200.
+Live `/ready` returned auth=true and database=true. A real public-food-image upload
+to the deployed API returned 200 in 7.2s with four foods and a USDA match; onboarding,
+meal save, daily/calendar totals and weights passed with a temporary account.
+
+A real browser scan exposed a provider ReadTimeout under the old 15-second per-call
+limit. Deployed `9ef12ad` with 30 seconds per call inside the unchanged 45-second
+overall deadline. The Chrome UI then passed photo selection, normalization, Gemini
+analysis, review, calorie editing, saving, Home totals and Calendar display (1307
+kcal, one meal). Both synthetic test accounts were removed; browser test records
+were verified gone. No existing user's records changed.
+
+46 backend tests passed, one opt-in local Supabase test skipped; client typecheck,
+lint and production web export passed. See [Recovery](RECOVERY.md) for hosting
+limitations and manual recovery checks. No paid upgrade was performed.
