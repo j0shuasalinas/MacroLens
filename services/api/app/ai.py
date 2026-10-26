@@ -36,7 +36,7 @@ class GeminiProvider:
         if mime not in ('image/jpeg', 'image/png', 'image/webp') or not image:
             raise ValueError('Invalid normalized image payload')
         async with genai.Client(api_key=settings.gemini_api_key, http_options=types.HttpOptions(
-                timeout=15000, retry_options=types.HttpRetryOptions(attempts=1))).aio as client:
+                timeout=30000, retry_options=types.HttpRetryOptions(attempts=1))).aio as client:
             response = await generate_with_retry(client, model=settings.gemini_model,
                 fallback_model=settings.gemini_fallback_model,
                 contents=[types.Content(role='user', parts=[

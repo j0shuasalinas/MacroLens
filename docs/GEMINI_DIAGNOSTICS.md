@@ -34,6 +34,9 @@ no data-URL prefix is passed as image bytes. The model's output is capped at 409
 - SDK retries are explicitly disabled (`attempts=1`) so they cannot multiply the
   application budget. Only upstream 503 retries: at most **three total attempts**,
   with 1–2s then 2–3s exponential delays plus jitter and a 45-second overall budget.
+  Individual transport requests allow up to 30 seconds for image inference, capped
+  by that overall budget. The earlier 15-second transport timeout was too short
+  for some real browser scans.
 - 503 Retry-After is a minimum delay. If it exceeds the remaining budget, return
   the failure immediately with guidance instead of waiting indefinitely.
 - 429 is returned immediately, without automatic retry. Respect the larger of

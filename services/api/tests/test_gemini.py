@@ -64,6 +64,7 @@ def test_payload_schema_and_strict_local_validation(monkeypatch):
     monkeypatch.setattr(ai.genai,'Client',Client)
     result=asyncio.run(ai.GeminiProvider().analyze(b'jpeg','image/jpeg'))
     assert result.items[0].name=='Scone' and seen['http_options'].retry_options.attempts==1
+    assert seen['http_options'].timeout==30000
     kwargs=call.await_args.kwargs;assert kwargs['model']==settings.gemini_model
     image=kwargs['contents'][0].parts[0].inline_data
     assert image.mime_type=='image/jpeg' and image.data==b'jpeg' and kwargs['contents'][0].role=='user'
