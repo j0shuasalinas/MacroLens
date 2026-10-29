@@ -161,3 +161,19 @@ were verified gone. No existing user's records changed.
 46 backend tests passed, one opt-in local Supabase test skipped; client typecheck,
 lint and production web export passed. See [Recovery](RECOVERY.md) for hosting
 limitations and manual recovery checks. No paid upgrade was performed.
+
+## Startup performance — 2026-10-28
+
+Authenticated startup and Home now read through Supabase with the user's JWT and
+unchanged RLS, avoiding Render's idle wake-up. Profile data is reused and caches
+are isolated per identity. Five new client tests, TypeScript, lint and production
+web export passed; backend: 46 passed, one opt-in local integration test skipped.
+Real two-account startup/RLS checks passed (214/150 ms including isolation checks).
+Chrome also loaded Home with an intentionally unreachable FastAPI URL.
+
+Netlify published `e13d4f1`; the versioned layout bundle returned HTTPS 200 with
+`Cache-Control: public,max-age=31536000,immutable`, nosniff and HSTS. The deployed
+app passed real sign-in and Home reload at desktop and 390×844 viewport sizes with
+a disposable synthetic account (321 kcal, 2,200 kcal goal). No native device
+latency measurement or compilation was performed. See [Startup](STARTUP.md) for
+security boundaries and the remaining cold-start limits on scans/writes.
