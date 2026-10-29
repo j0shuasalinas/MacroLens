@@ -1,16 +1,16 @@
 import { ScrollView, Text, View, Pressable, useWindowDimensions } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { api, Meal, sum, today, useDraft } from '../src/api';
+import { startupReads, Meal, sum, today, useDraft } from '../src/api';
 import { Button, Card, colors, ProgressRing, s } from '../src/ui';
 
 export default function Dashboard() {
   const day = today();
   const { width } = useWindowDimensions();
-  const meals = useQuery<Meal[]>({ queryKey: ['meals', day], queryFn: () => api('/meals?day=' + day) });
-  const goals = useQuery({ queryKey: ['goals'], queryFn: () => api('/goals') });
-  const weekly = useQuery<{ day: string; calories: number }[]>({ queryKey: ['weekly', day], queryFn: () => api('/summary/weekly?day=' + day) });
-  const profile = useQuery({ queryKey: ['profile'], queryFn: () => api('/profile') });
+  const meals = useQuery<Meal[]>({ queryKey: ['meals', day], queryFn: () => startupReads.meals(day) });
+  const goals = useQuery({ queryKey: ['goals'], queryFn: () => startupReads.goals() });
+  const weekly = useQuery<{ day: string; calories: number }[]>({ queryKey: ['weekly', day], queryFn: () => startupReads.weekly(day) });
+  const profile = useQuery({ queryKey: ['profile'], queryFn: () => startupReads.profile() });
   const calories = sum(meals.data || [], 'calories');
   const remaining = goals.data ? Math.max(0, Math.round(goals.data.calories - calories)) : null;
   const error = meals.error || goals.error || weekly.error || profile.error;

@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { create } from 'zustand';
+import { createStartupReads } from './startup-reads';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -9,6 +10,7 @@ export const configured = Boolean(url && key);
 export const supabase = createClient(url || 'https://unconfigured.supabase.co', key || 'unconfigured', {
   auth: { storage: AsyncStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: Platform.OS === 'web' },
 });
+export const startupReads = createStartupReads(supabase);
 export const apiUrl = process.env.EXPO_PUBLIC_API_URL || (__DEV__ ? 'http://localhost:8010' : '');
 if (!__DEV__ && !apiUrl.startsWith('https://')) throw new Error('Production EXPO_PUBLIC_API_URL must use HTTPS');
 export class ApiError extends Error {

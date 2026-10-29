@@ -8,7 +8,8 @@
     "web": "expo start --web",
     "build:web": "node scripts/check-env.mjs && expo export --platform web && node scripts/web-metadata.mjs",
     "typecheck": "tsc --noEmit",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
